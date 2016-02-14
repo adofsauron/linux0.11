@@ -54,6 +54,7 @@ movl %eax,0x000000 # loop forever if it isn't
 cmpl %eax,0x100000
 je 1b # '1b'表示向后(backward)跳转到标号1 去（33 行）。
 # 若是'5f'则表示向前(forward)跳转到标号5 去。
+
 /*
 * NOTE! 486 should set bit 16, to check for write-protect in supervisor
 * mode. Then it would be unnecessary with the "verify_area()"-calls.
@@ -65,6 +66,7 @@ je 1b # '1b'表示向后(backward)跳转到标号1 去（33 行）。
 * 此后"verify_area()"调用中就不需要了。486 的用户通常也会想将NE(#5)置位，以便
 * 对数学协处理器的出错使用int 16。
 */
+
 # 下面这段程序（43-65）用于检查数学协处理器芯片是否存在。方法是修改控制寄存器CR0，在
 # 假设存在协处理器的情况下执行一个协处理器指令，如果出错的话则说明协处理器芯片不存在，
 # 需要设置CR0 中的协处理器仿真位EM（位2），并复位协处理器存在标志MP（位1）。
@@ -114,14 +116,14 @@ ret
 * 描述符表寄存器(用lidt 指令)。真正实用的中断门以后再安装。当我们在其它地方认为一切
 * 都正常时再开启中断。该子程序将会被页表覆盖掉。
 */
+
 # 中断描述符表中的项虽然也是8 字节组成，但其格式与全局表中的不同，被称为门描述符
 # (Gate Descriptor)。它的0-1,6-7 字节是偏移量，2-3 字节是选择符，4-5 字节是一些标志。
 setup_idt:
 lea ignore_int,%edx # 将ignore_int 的有效地址（偏移值）值??edx 寄存器
 movl $0x00080000,%eax # 将选择符0x0008 置入eax 的高16 位中。
 movw %dx,%ax /* selector = 0x0008 = cs */
-# 偏移值的低16 位置入eax 的低16 位中。此时eax 含有
-#门描述符低4 字节的值。
+# 偏移值的低16 位置入eax 的低16 位中。此时eax 含有门描述符低4 字节的值。
 movw $0x8E00,%dx /* interrupt gate - dpl=0, present */
 # 此时edx 含有门描述符高4 字节的值。
 lea _idt,%edi # _idt 是中断描述符表的地址。
@@ -130,7 +132,7 @@ rp_sidt:
 movl %eax,(%edi) # 将哑中断门描述符存入表中。
 movl %edx,4(%edi)
 addl $8,%edi # edi 指向表中下一项。
-dec %ecx
+dec	%ecx
 jne rp_sidt
 lidt idt_descr # 加载中断描述符表寄存器值。
 ret
@@ -203,6 +205,7 @@ pushl $0
 pushl $L6 # return address for main, if it decides to.
 pushl $_main # '_main'是编译程序对main 的内部表示方法。
 jmp setup_paging # 跳转至第198 行。
+
 L6:
 jmp L6 # main should never return here, but
 # just in case, we know what happens.
@@ -274,6 +277,7 @@ iret # 中断返回（把中断调用时压入栈的CPU 标志寄存器（32 位）值也弹出）。
 * 我已经通过设置某类标志来给出需要改动的地方（搜索“16Mb”），但我不能保证作这些
 * 改动就行了??）。
 */
+
 .align 2 # 按4 字节方式对齐内存地址边界。
 setup_paging: # 首先对5 页内存（1 页目录 + 4 页页表）清零
 movl $1024*5,%ecx /* 5 pages - pg_dir+4 page tables */
@@ -300,7 +304,7 @@ movl $0xfff007,%eax /* 16Mb - 4096 + 7 (r/w user,p) */
 # 最后1 项对应物理内存页面的地址是0xfff000，
 # 加上属性标志7，即为0xfff007.
 std # 方向位置位，edi 值递减(4 字节)。
-1: stosl /* fill pages backwards - more efficient :-) */
+1: stosl	/* fill pages backwards - more efficient :-) */
 subl $0x1000,%eax # 每填写好一项，物理地址值减0x1000。
 jge 1b # 如果小于0 则说明全添写好了。
 # 设置页目录基址寄存器cr3 的值，指向页目录表。
@@ -315,13 +319,18 @@ ret /* this also flushes prefetch-queue */
 # 该返回指令的另一个作用是将堆栈中的main 程序的地址弹出，并开始运行/init/main.c 程序。
 # 本程序到此真正结束了。
 
+
+
+
 .align 2 # 按4 字节方式对齐内存地址边界。
 .word 0
+
 idt_descr: #下面两行是lidt 指令的6 字节操作数：长度，基址。
 .word 256*8-1 # idt contains 256 entries
 .long _idt
 .align 2
 .word 0
+
 gdt_descr: # 下面两行是lgdt 指令的6 字节操作数：长度，基址。
 .word 256*8-1 # so does gdt (not that that's any
 .long _gdt # magic number, but it works for me :^)
@@ -333,6 +342,7 @@ _idt: .fill 256,8,0 # idt is uninitialized # 256 项，每项8 字节，填0。
 # 系统段描述符linux 没有派用处。后面还预留了252 项的空间，用于放置所创建任务的
 # 局部描述符(LDT)和对应的任务状态段TSS 的描述符。
 # (0-nul, 1-cs, 2-ds, 3-sys, 4-TSS0, 5-LDT0, 6-TSS1, 7-LDT1, 8-TSS2 etc...)
+
 _gdt: .quad 0x0000000000000000 /* NULL descriptor */
 .quad 0x00c09a0000000fff /* 16Mb */ # 代码段最大长度16M。
 .quad 0x00c0920000000fff /* 16Mb */ # 数据段最大长度16M。

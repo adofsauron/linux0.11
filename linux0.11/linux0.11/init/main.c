@@ -31,16 +31,20 @@
  * 实际上只有pause 和fork 需要使用内嵌方式，以保证从main()中不会弄乱堆栈，但是我们同时还
  * 定义了其它一些函数。
  */
-static inline
-_syscall0 (int, fork)		// 是unistd.h 中的内嵌宏代码。以嵌入汇编的形式调用
-	// Linux 的系统调用中断0x80。该中断是所有系统调用的
-	// 入口。该条语句实际上是int fork()创建进程系统调用。
-	// syscall0 名称中最后的0 表示无参数，1 表示1 个参数。
-     static inline _syscall0 (int, pause)	// int pause()系统调用：暂停进程的执行，直到
-	// 收到一个信号。
-     static inline _syscall1 (int, setup, void *, BIOS)	// int setup(void * BIOS)系统调用，仅用于
-	// linux 初始化（仅在这个程序中被调用）。
-     static inline _syscall0 (int, sync)	// int sync()系统调用：更新文件系统。
+
+// 是unistd.h 中的内嵌宏代码。以嵌入汇编的形式调用
+// Linux 的系统调用中断0x80。该中断是所有系统调用的
+
+// syscall0 名称中最后的0 表示无参数，1 表示1 个参数。
+
+static inline _syscall0 (int, fork)		// 入口。该条语句实际上是int fork()创建进程系统调用。
+
+static inline _syscall0 (int, pause)	// int pause()系统调用：暂停进程的执行，直到收到一个信号。 
+
+static inline _syscall1 (int, setup, void *, BIOS)	// int setup(void * BIOS)系统调用，仅用于linux 初始化（仅在这个程序中被调用）。
+
+static inline _syscall0 (int, sync)		// int sync()系统调用：更新文件系统。
+
 #include <linux/tty.h>		// tty 头文件，定义了有关tty_io，串行通信方面的参数、常数。
 #include <linux/sched.h>	// 调度程序头文件，定义了任务结构task_struct、第1 个初始任务
 	// 的数据。还有一些以宏的形式定义的有关描述符参数设置和获取的
@@ -57,18 +61,19 @@ _syscall0 (int, fork)		// 是unistd.h 中的内嵌宏代码。以嵌入汇编的形式调用
 #include <fcntl.h>		// 文件控制头文件。用于文件及其描述符的操作控制常数符号的定义。
 #include <sys/types.h>		// 类型头文件。定义了基本的系统数据类型。
 #include <linux/fs.h>		// 文件系统头文件。定义文件表结构（file,buffer_head,m_inode 等）。
-     static char printbuf[1024];	// 静态字符串数组。
 
-     extern int vsprintf ();	// 送格式化输出到一字符串中（在kernel/vsprintf.c，92 行）。
-     extern void init (void);	// 函数原形，初始化（在168 行）。
-     extern void blk_dev_init (void);	// 块设备初始化子程序（kernel/blk_drv/ll_rw_blk.c,157 行）
-     extern void chr_dev_init (void);	// 字符设备初始化（kernel/chr_drv/tty_io.c, 347 行）
-     extern void hd_init (void);	// 硬盘初始化程序（kernel/blk_drv/hd.c, 343 行）
-     extern void floppy_init (void);	// 软驱初始化程序（kernel/blk_drv/floppy.c, 457 行）
-     extern void mem_init (long start, long end);	// 内存管理初始化（mm/memory.c, 399 行）
-     extern long rd_init (long mem_start, int length);	//虚拟盘初始化(kernel/blk_drv/ramdisk.c,52)
-     extern long kernel_mktime (struct tm *tm);	// 建立内核时间（秒）。
-     extern long startup_time;	// 内核启动时间（开机时间）（秒）。
+static char printbuf[1024];	// 静态字符串数组。
+
+extern int  vsprintf ();	// 送格式化输出到一字符串中（在kernel/vsprintf.c，92 行）。
+extern void init (void);	// 函数原形，初始化（在168 行）。
+extern void blk_dev_init (void);	// 块设备初始化子程序（kernel/blk_drv/ll_rw_blk.c,157 行）
+extern void chr_dev_init (void);	// 字符设备初始化（kernel/chr_drv/tty_io.c, 347 行）
+extern void hd_init (void);	// 硬盘初始化程序（kernel/blk_drv/hd.c, 343 行）
+extern void floppy_init (void);	// 软驱初始化程序（kernel/blk_drv/floppy.c, 457 行）
+extern void mem_init (long start, long end);	// 内存管理初始化（mm/memory.c, 399 行）
+extern long rd_init (long mem_start, int length);	//虚拟盘初始化(kernel/blk_drv/ramdisk.c,52)
+extern long kernel_mktime (struct tm *tm);	// 建立内核时间（秒）。
+extern long startup_time;	// 内核启动时间（开机时间）（秒）。
 
 	/*
 	 * This is set up by the setup-routine at boot-time
@@ -76,9 +81,9 @@ _syscall0 (int, fork)		// 是unistd.h 中的内嵌宏代码。以嵌入汇编的形式调用
 	/*
 	 * 以下这些数据是由setup.s 程序在引导时间设置的（参见第2 章2.3.1 节中的表2.1）。
 	 */
-#define EXT_MEM_K (*(unsigned short *)0x90002)	// 1M 以后的扩展内存大小（KB）。
-#define DRIVE_INFO (*(struct drive_info *)0x90080)	// 硬盘参数表基址。
-#define ORIG_ROOT_DEV (*(unsigned short *)0x901FC)	// 根文件系统所在设备号。
+#define EXT_MEM_K		(*(unsigned short *)	0x90002)	// 1M 以后的扩展内存大小（KB）。
+#define DRIVE_INFO		(*(struct drive_info *)	0x90080)	// 硬盘参数表基址。
+#define ORIG_ROOT_DEV	(*(unsigned short *)	0x901FC)	// 根文件系统所在设备号。
 
 	/*
 	 * Yeah, yeah, it's ugly, but I cannot find how to do this correctly
@@ -153,6 +158,7 @@ void main (void)		/* This really IS void, no error here. */
   drive_info = DRIVE_INFO;
   memory_end = (1 << 20) + (EXT_MEM_K << 10);	// 内存大小=1Mb 字节+扩展内存(k)*1024 字节。
   memory_end &= 0xfffff000;	// 忽略不到4Kb（1 页）的内存数。
+
   if (memory_end > 16 * 1024 * 1024)	// 如果内存超过16Mb，则按16Mb 计。
     memory_end = 16 * 1024 * 1024;
   if (memory_end > 12 * 1024 * 1024)	// 如果内存>12Mb，则设置缓冲区末端=4Mb
@@ -161,10 +167,13 @@ void main (void)		/* This really IS void, no error here. */
     buffer_memory_end = 2 * 1024 * 1024;
   else
     buffer_memory_end = 1 * 1024 * 1024;	// 否则则设置缓冲区末端=1Mb
+  
   main_memory_start = buffer_memory_end;	// 主内存起始位置=缓冲区末端；
+
 #ifdef RAMDISK			// 如果定义了虚拟盘，则主内存将减少。
   main_memory_start += rd_init (main_memory_start, RAMDISK * 1024);
 #endif
+
   // 以下是内核进行所有方面的初始化工作。阅读时最好跟着调用的程序深入进去看，实在看
   // 不下去了，就先放一放，看下一个初始化调用 -- 这是经验之谈?。
   mem_init (main_memory_start, memory_end);
@@ -178,6 +187,7 @@ void main (void)		/* This really IS void, no error here. */
   hd_init ();			// 硬盘初始化。 （kernel/blk_dev/hd.c，343 行）
   floppy_init ();		// 软驱初始化。 （kernel/blk_dev/floppy.c，457 行）
   sti ();			// 所有初始化工作都做完了，开启中断。
+
   // 下面过程通过在堆栈中设置的参数，利用中断返回指令切换到任务0。
   move_to_user_mode ();		// 移到用户模式。 （include/asm/system.h，第1 行）
   if (!fork ())
@@ -206,18 +216,19 @@ static int printf (const char *fmt, ...)
 	// 该程序使用vsprintf()将格式化的字符串放入printbuf 缓冲区，然后用write()将缓冲区的内容
 	// 输出到标准设备（1--stdout）。
 {
-  va_list args;
-  int i;
+	va_list args;
+	int i;
 
-    va_start (args, fmt);
-    write (1, printbuf, i = vsprintf (printbuf, fmt, args));
-    va_end (args);
-    return i;
+	va_start (args, fmt);
+	write (1, printbuf, i = vsprintf (printbuf, fmt, args));
+	va_end (args);
+	return i;
 }
 
 static char *argv_rc[] =
 {
 "/bin/sh", NULL};		// 调用执行程序时参数的字符串数组。
+
 static char *envp_rc[] =
 {
 "HOME=/", NULL};		// 调用执行程序时的环境字符串数组。
@@ -225,6 +236,7 @@ static char *envp_rc[] =
 static char *argv[] =
 {
 "-/bin/sh", NULL};		// 同上。
+
 static char *envp[] =
 {
 "HOME=/usr/root", NULL};
@@ -243,6 +255,7 @@ void init (void)
     (void) dup (0);		// 复制句柄，产生句柄2 号 -- stderr 标准出错输出设备。
     printf ("%d buffers = %d bytes buffer space\n\r", NR_BUFFERS, NR_BUFFERS * BLOCK_SIZE);	// 打印缓冲区块数和总字节数，每块1024 字节。
     printf ("Free mem: %d bytes\n\r", memory_end - main_memory_start);	//空闲内存字节数。
+
   // 下面fork()用于创建一个子进程(子任务)。对于被创建的子进程，fork()将返回0 值，
   // 对于原(父进程)将返回子进程的进程号。所以180-184 句是子进程执行的内容。该子进程
   // 关闭了句柄0(stdin)，以只读方式打开/etc/rc 文件，并执行/bin/sh 程序，所带参数和
@@ -251,10 +264,12 @@ void init (void)
     {
       close (0);
       if (open ("/etc/rc", O_RDONLY, 0))
-	_exit (1);		// 如果打开文件失败，则退出(/lib/_exit.c,10)。
-      execve ("/bin/sh", argv_rc, envp_rc);	// 装入/bin/sh 程序并执行。
+		_exit (1);		// 如果打开文件失败，则退出(/lib/_exit.c,10)。
+      
+	  execve ("/bin/sh", argv_rc, envp_rc);	// 装入/bin/sh 程序并执行。
       _exit (2);		// 若execve()执行失败则退出(出错码2,“文件或目录不存在”)。
     }
+
   // 下面是父进程执行的语句。wait()是等待子进程停止或终止，其返回值应是子进程的进程号(pid)。
   // 这三句的作用是父进程等待子进程的结束。&i 是存放返回状态信息的位置。如果wait()返回值不
   // 等于子进程号，则继续等待。
@@ -271,26 +286,30 @@ void init (void)
   while (1)
     {
       if ((pid = fork ()) < 0)
-	{
-	  printf ("Fork failed in init\r\n");
-	  continue;
-	}
+		{
+		  printf ("Fork failed in init\r\n");
+		  continue;
+		}
+
       if (!pid)
-	{
-	  close (0);
-	  close (1);
-	  close (2);
-	  setsid ();
-	  (void) open ("/dev/tty0", O_RDWR, 0);
-	  (void) dup (0);
-	  (void) dup (0);
-	  _exit (execve ("/bin/sh", argv, envp));
-	}
+		{
+		  close (0);
+		  close (1);
+		  close (2);
+		  setsid ();
+		  (void) open ("/dev/tty0", O_RDWR, 0);
+		  (void) dup (0);
+		  (void) dup (0);
+		  _exit (execve ("/bin/sh", argv, envp));
+		}
+
       while (1)
-	if (pid == wait (&i))
-	  break;
+		if (pid == wait (&i))
+		  break;
+
       printf ("\n\rchild %d died with code %04x\n\r", pid, i);
       sync ();
     }
+
   _exit (0);			/* NOTE! _exit, not exit() */
 }

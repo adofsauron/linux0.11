@@ -331,11 +331,11 @@ __asm__( "movw %%dx,%0\n\t" \	// 段长limit 低16 位(位15-0)??[addr]。
 // edx - 存放基地址(__base)；%1 - 地址addr 偏移2；%2 - 地址addr 偏移4；%3 - addr 偏移7。
 #define _get_base(addr) ({ \
 unsigned long __base; \
-__asm__( "movb %3,%%dh\n\t" \	// 取[addr+7]处基址高16 位的高8 位(位31-24)??dh。
-  "movb %2,%%dl\n\t" \		// 取[addr+4]处基址高16 位的低8 位(位23-16)??dl。
-  "shll $16,%%edx\n\t" \	// 基地址高16 位移到edx 中高16 位处。
-  "movw %1,%%dx" \		// 取[addr+2]处基址低16 位(位15-0)??dx。
-:"=d" (__base) \		// 从而edx 中含有32 位的段基地址。
+__asm__( "movb %3,%%dh\n\t" \		// 取[addr+7]处基址高16 位的高8 位(位31-24)??dh。
+  "movb %2,%%dl\n\t" \				// 取[addr+4]处基址高16 位的低8 位(位23-16)??dl。
+  "shll $16,%%edx\n\t" \			// 基地址高16 位移到edx 中高16 位处。
+  "movw %1,%%dx" \					// 取[addr+2]处基址低16 位(位15-0)??dx。
+:"=d" (__base) \					// 从而edx 中含有32 位的段基地址。
 :"m" (*((addr) + 2)), "m" (*((addr) + 4)), "m" (*((addr) + 7))); \
 __base; \
 } \

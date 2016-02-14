@@ -38,6 +38,7 @@
 *
 * 从系统调用返回（'ret_from_system_call'）时堆栈的内容见上面19-30 行。
 */
+# 5.5 system_call.s 程序
 
 SIG_CHLD = 17 # 定义SIG_CHLD 信号（子进程停止或结束）。
 
@@ -45,24 +46,23 @@ EAX = 0x00 # 堆栈中各个寄存器的偏移位置。
 EBX = 0x04
 ECX = 0x08
 EDX = 0x0C
-FS = 0x10
-5.5 system_call.s 程序
-ES = 0x14
-DS = 0x18
+FS	= 0x10
+ES	= 0x14
+DS	= 0x18
 EIP = 0x1C
-CS = 0x20
-EFLAGS = 0x24
-OLDESP = 0x28 # 当有特权级变化时。
-OLDSS = 0x2C
+CS	= 0x20
+EFLAGS	= 0x24
+OLDESP	= 0x28 # 当有特权级变化时。
+OLDSS	= 0x2C
 
 # 以下这些是任务结构(task_struct)中变量的偏移值，参见include/linux/sched.h，77 行开始。
-state = 0 # these are offsets into the task-struct. # 进程状态码
-counter = 4 # 任务运行时间计数(递减)（滴答数），运行时间片。
-priority = 8 // 运行优先数。任务开始运行时counter=priority，越大则运行时间越长。
-signal = 12 // 是信号位图，每个比特位代表一种信号，信号值=位偏移值+1。
-sigaction = 16 # MUST be 16 (=len of sigaction) // sigaction 结构长度必须是16 字节。
-// 信号执行属性结构数组的偏移值，对应信号将要执行的操作和标志信息。
-blocked = (33*16) // 受阻塞信号位图的偏移量。
+state		= 0 # these are offsets into the task-struct. # 进程状态码
+counter		= 4 # 任务运行时间计数(递减)（滴答数），运行时间片。
+priority	= 8 # 运行优先数。任务开始运行时counter=priority，越大则运行时间越长。
+signal		= 12 # 是信号位图，每个比特位代表一种信号，信号值=位偏移值+1。
+sigaction	= 16 # MUST be 16 (=len of sigaction) // sigaction 结构长度必须是16 字节。
+# 信号执行属性结构数组的偏移值，对应信号将要执行的操作和标志信息。
+blocked		= (33*16) # 受阻塞信号位图的偏移量。
 
 # 以下定义在sigaction 结构中的偏移量，参见include/signal.h，第48 行开始。
 # offsets within sigaction
@@ -91,16 +91,18 @@ bad_sys_call:
 movl $-1,%eax # eax 中置-1，退出中断。
 iret
 # 重新执行调度程序入口。调度程序schedule 在(kernel/sched.c,104)。
+
 .align 2
 reschedule:
 pushl $ret_from_sys_call # 将ret_from_sys_call 的地址入栈（101 行）。
 jmp _schedule
+
 #### int 0x80 --linux 系统调用入口点(调用中断int 0x80，eax 中是调用号)。
+# 5.5 system_call.s 程序
 .align 2
 _system_call:
 cmpl $nr_system_calls-1,%eax # 调用号如果超出范围的话就在eax 中置-1 并退出。
 ja bad_sys_call
-5.5 system_call.s 程序
 push %ds # 保存原段寄存器值。
 push %es
 push %fs
@@ -192,6 +194,7 @@ jmp _math_error # 执行C 函数math_error()(kernel/math/math_emulate.c,37)
 # 与CPU 正在执行的任务不匹配了。当CPU 在运行一个转义指令时发现TS 置位了，就会引发该中断。
 # 此时就应该恢复新任务的协处理器执行状态（165 行）。参见(kernel/sched.c,77)中的说明。
 # 该中断最后将转移到标号ret_from_sys_call 处执行下去（检测并处理信号）。
+
 .align 2
 _device_not_available:
 push %ds
@@ -226,6 +229,7 @@ ret # 这里的ret 将跳转到ret_from_sys_call(101 行)。
 # 定时芯片8253/8254 是在(kernel/sched.c,406)处初始化的。因此这里jiffies 每10 毫秒加1。
 # 这段代码将jiffies 增1，发送结束中断指令给8259 控制器，然后用当前特权级作为参数调用
 # C 函数do_timer(long CPL)。当调用返回时转去检测并处理信号。
+
 .align 2
 _timer_interrupt:
 push %ds # save ds,es and put kernel data space

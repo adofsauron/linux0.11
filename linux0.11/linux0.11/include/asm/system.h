@@ -11,10 +11,12 @@ __asm__ ( "movl %%esp,%%eax\n\t" \	// 保存堆栈指针esp 到eax 寄存器中。
   "1:\tmovl $0x17,%%eax\n\t" \	// 此时开始执行任务0，
   "movw %%ax,%%ds\n\t" \	// 初始化段寄存器指向本局部表的数据段。
 "movw %%ax,%%es\n\t" "movw %%ax,%%fs\n\t" "movw %%ax,%%gs":::"ax")
-#define sti() __asm__ ( "sti"::)	// 开中断嵌入汇编宏函数。
-#define cli() __asm__ ( "cli"::)	// 关中断。
-#define nop() __asm__ ( "nop"::)	// 空操作。
-#define iret() __asm__ ( "iret"::)	// 中断返回。
+
+#define sti()	__asm__ ( "sti"::)	// 开中断嵌入汇编宏函数。
+#define cli()	 __asm__ ( "cli"::)	// 关中断。
+#define nop()	__asm__ ( "nop"::)	// 空操作。
+#define iret()	__asm__ ( "iret"::)	// 中断返回。
+
 //// 设置门描述符宏函数。
 // 参数：gate_addr -描述符地址；type -描述符中类型域值；dpl -描述符特权层值；addr -偏移地址。
 // %0 - (由dpl,type 组合成的类型标志字)；%1 - (描述符低4 字节地址)；
@@ -23,34 +25,39 @@ __asm__ ( "movl %%esp,%%eax\n\t" \	// 保存堆栈指针esp 到eax 寄存器中。
 __asm__ ( "movw %%dx,%%ax\n\t" \	// 将偏移地址低字与选择符组合成描述符低4 字节(eax)。
   "movw %0,%%dx\n\t" \		// 将类型标志字与偏移高字组合成描述符高4 字节(edx)。
   "movl %%eax,%1\n\t" \		// 分别设置门描述符的低4 字节和高4 字节。
-"movl %%edx,%2":
-:"i" ((short) (0x8000 + (dpl << 13) + (type << 8))),
-  "o" (*((char *) (gate_addr))),
+"movl %%edx,%2":	\
+:"i" ((short) (0x8000 + (dpl << 13) + (type << 8))),	\
+  "o" (*((char *) (gate_addr))),	\
   "o" (*(4 + (char *) (gate_addr))), "d" ((char *) (addr)), "a" (0x00080000))
+
 //// 设置中断门函数。
 // 参数：n - 中断号；addr - 中断程序偏移地址。
 // &idt[n]对应中断号在中断描述符表中的偏移值；中断描述符的类型是14，特权级是0。
 #define set_intr_gate(n,addr) \
 _set_gate(&idt[n],14,0,addr)
+
 //// 设置陷阱门函数。
 // 参数：n - 中断号；addr - 中断程序偏移地址。
 // &idt[n]对应中断号在中断描述符表中的偏移值；中断描述符的类型是15，特权级是0。
+
 #define set_trap_gate(n,addr) \
 _set_gate(&idt[n],15,0,addr)
+
 //// 设置系统调用门函数。
 // 参数：n - 中断号；addr - 中断程序偏移地址。
 // &idt[n]对应中断号在中断描述符表中的偏移值；中断描述符的类型是15，特权级是3。
 #define set_system_gate(n,addr) \
 _set_gate(&idt[n],15,3,addr)
+
 //// 设置段描述符函数。
 // 参数：gate_addr -描述符地址；type -描述符中类型域值；dpl -描述符特权层值；
 // base - 段的基地址；limit - 段限长。（参见段描述符的格式）
 #define _set_seg_desc(gate_addr,type,dpl,base,limit) {\
-*(gate_addr) = ((base) & 0xff000000) | \	// 描述符低4 字节。
-  (((base) & 0x00ff0000) >> 16) |
-  ((limit) & 0xf0000) | ((dpl) << 13) | (0x00408000) | ((type) << 8);
-*((gate_addr) + 1) = (((base) & 0x0000ffff) << 16) | \	// 描述符高4 字节。
-  ((limit) & 0x0ffff);
+	*(gate_addr) = ((base) & 0xff000000) | \	// 描述符低4 字节。
+	(((base) & 0x00ff0000) >> 16) |			\
+	((limit) & 0xf0000) | ((dpl) << 13) | (0x00408000) | ((type) << 8); \
+	*((gate_addr) + 1) = (((base) & 0x0000ffff) << 16) | \	// 描述符高4 字节。
+	((limit) & 0x0ffff);
 }
 
 //// 在全局表中设置任务状态段/局部表描述符。

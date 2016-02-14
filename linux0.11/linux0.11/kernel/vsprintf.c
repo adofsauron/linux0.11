@@ -16,7 +16,7 @@
 
 /* we use this so that we can do without the ctype library */
 /* 我们使用下面的定义，这样我们就可以不使用ctype 库了 */
-#define is_digit(c) ((c) >= '' && (c) <= '9')	// 判断字符是否数字字符。
+#define is_digit(c) ((c) >= '0' && (c) <= '9')	// 判断字符是否数字字符。
 
 // 该函数将字符数字串转换成整数。输入是数字串指针的指针，返回是结果数值。另外指针将前移。
 static int
@@ -25,18 +25,18 @@ skip_atoi (const char **s)
   int i = 0;
 
   while (is_digit (**s))
-    i = i * 10 + *((*s)++) - '';
+    i = i * 10 + *((*s)++) - '0';
   return i;
 }
 
 // 这里定义转换类型的各种符号常数。
-#define ZEROPAD 1 /* pad with zero */	/* 填充零 */
-#define SIGN 2 /* unsigned/signed long */	/* 无符号/符号长整数 */
-#define PLUS 4 /* show plus */	/* 显示加 */
-#define SPACE 8 /* space if plus */	/* 如是加，则置空格 */
-#define LEFT 16 /* left justified */	/* 左调整 */
-#define SPECIAL 32 /* 0x */	/* 0x */
-#define SMALL 64 /* use 'abcdef' instead of 'ABCDEF' */	/* 使用小写字母 */
+#define ZEROPAD		1	/* pad with zero */	/* 填充零 */
+#define SIGN		2	/* unsigned/signed long */	/* 无符号/符号长整数 */
+#define PLUS		4	/* show plus */	/* 显示加 */
+#define SPACE		8	/* space if plus */	/* 如是加，则置空格 */
+#define LEFT		16	/* left justified */	/* 左调整 */
+#define SPECIAL		32	/* 0x */	/* 0x */
+#define SMALL		64	/* use 'abcdef' instead of 'ABCDEF' */	/* 使用小写字母 */
 
 // 除操作。输入：n 为被除数，base 为除数；结果：n 为商，函数返回值为余数。
 // 参见4.5.3 节有关嵌入汇编的信息。
@@ -67,7 +67,7 @@ number (char *str, int num, int base, int size, int precision, int type)
 // 如果类型指出要填零，则置字符变量c='0'（也即''），否则c 等于空格字符。
 // 如果类型指出是带符号数并且数值num 小于0，则置符号变量sign=负号，并使num 取绝对值。
 // 否则如果类型指出是加号，则置sign=加号，否则若类型带空格标志则sign=空格，否则置0。
-  c = (type & ZEROPAD) ? '' : ' ';
+  c = (type & ZEROPAD) ? '0' : ' ';
   if (type & SIGN && num < 0)
     {
       sign = '-';
@@ -87,7 +87,7 @@ number (char *str, int num, int base, int size, int precision, int type)
 // 如果数值num 为0，则临时字符串='0'；否则根据给定的基数将数值num 转换成字符形式。
   i = 0;
   if (num == 0)
-    tmp[i++] = '';
+    tmp[i++] = '0';
   else
     while (num != 0)
       tmp[i++] = digits[do_div (num, base)];
@@ -107,10 +107,10 @@ number (char *str, int num, int base, int size, int precision, int type)
 // 若类型指出是特殊转换，则对于八进制转换结果头一位放置一个'0'；而对于十六进制则存放'0x'。
   if (type & SPECIAL)
     if (base == 8)
-      *str++ = '';
+      *str++ = '0';
     else if (base == 16)
       {
-	*str++ = '';
+	*str++ = '0';
 	*str++ = digits[33];	// 'X'或'x'
       }
 // 若类型中没有左调整（左靠齐）标志，则在剩余宽度中存放c 字符（'0'或空格），见51 行。
@@ -119,7 +119,7 @@ number (char *str, int num, int base, int size, int precision, int type)
       *str++ = c;
 // 此时i 存有数值num 的数字个数。若数字个数小于精度值，则str 中放入（精度值-i）个'0'。
   while (i < precision--)
-    *str++ = '';
+    *str++ = '0';
 // 将转数值换好的数字字符填入str 中。共i 个。
   while (i-- > 0)
     *str++ = tmp[i];
@@ -136,11 +136,11 @@ number (char *str, int num, int base, int size, int precision, int type)
 int
 vsprintf (char *buf, const char *fmt, va_list args)
 {
-  int len;
-  int i;
-  char *str;			// 用于存放转换过程中的字符串。
-  char *s;
-  int *ip;
+  int	len;
+  int	i;
+  char	*str;			// 用于存放转换过程中的字符串。
+  char	*s;
+  int	*ip;
 
   int flags;			/* flags to number() */
 /* number()函数使用的标志 */
@@ -157,10 +157,10 @@ vsprintf (char *buf, const char *fmt, va_list args)
 // 格式转换指示字符串均以'%'开始，这里从fmt 格式字符串中扫描'%'，寻找格式转换字符串的开始。
 // 不是格式指示的一般字符均被依次存入str。
       if (*fmt != '%')
-	{
-	  *str++ = *fmt;
-	  continue;
-	}
+		{
+		  *str++ = *fmt;
+		  continue;
+		}
 
 // 下面取得格式指示字符串中的标志域，并将标志常量放入flags 变量中。
 /* process flags */
@@ -168,23 +168,23 @@ vsprintf (char *buf, const char *fmt, va_list args)
     repeat:
       ++fmt;			/* this also skips first '%' */
       switch (*fmt)
-	{
-	case '-':
-	  flags |= LEFT;
-	  goto repeat;		// 左靠齐调整。
-	case '+':
-	  flags |= PLUS;
-	  goto repeat;		// 放加号。
-	case ' ':
-	  flags |= SPACE;
-	  goto repeat;		// 放空格。
-	case '#':
-	  flags |= SPECIAL;
-	  goto repeat;		// 是特殊转换。
-	case '':
-	  flags |= ZEROPAD;
-	  goto repeat;		// 要填零(即'0')。
-	}
+		{
+		case '-':
+		  flags |= LEFT;
+		  goto repeat;		// 左靠齐调整。
+		case '+':
+		  flags |= PLUS;
+		  goto repeat;		// 放加号。
+		case ' ':
+		  flags |= SPACE;
+		  goto repeat;		// 放空格。
+		case '#':
+		  flags |= SPECIAL;
+		  goto repeat;		// 是特殊转换。
+		case '0':
+		  flags |= ZEROPAD;
+		  goto repeat;		// 要填零(即'0')。
+		}
 
 // 取当前参数字段宽度域值，放入field_width 变量中。如果宽度域中是数值则直接取其为宽度值。
 // 如果宽度域中是字符'*'，表示下一个参数指定宽度。因此调用va_arg 取宽度值。若此时宽度值
@@ -307,8 +307,7 @@ vsprintf (char *buf, const char *fmt, va_list args)
 			field_width, precision, flags);
 	  break;
 
-// 若格式转换指示符是'n'，则表示要把到目前为止转换输出的字符数保存到对应参数指针指定的位置
-	  中。
+// 若格式转换指示符是'n'，则表示要把到目前为止转换输出的字符数保存到对应参数指针指定的位置中。	  
 // 首先利用va_arg()取得该参数指针，然后将已经转换好的字符数存入该指针所指的位置。
 	case 'n':
 	  ip = va_arg (args, int *);
